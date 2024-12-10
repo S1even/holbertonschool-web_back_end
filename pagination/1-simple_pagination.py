@@ -8,6 +8,7 @@ from typing import List, Tuple
 
 index_range = __import__('0-simple_helper_function').index_range
 
+
 class Server:
     """Server class to paginate a database of popular baby names.
     """
