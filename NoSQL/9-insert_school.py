@@ -4,4 +4,5 @@
 
 def insert_school(mongo_collection, **kwargs):
     """inserts new document and return new id"""
-    return mongo_collection.insert_one(kwargs).insert_id
+    done = mongo_collection.insert_one(kwargs)
+    return done.inserted_id
