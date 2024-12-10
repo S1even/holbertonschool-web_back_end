@@ -6,6 +6,9 @@ from typing import List, Dict, Any
 import csv
 
 
+index_range = __import__('0-simple_helper_function').index_range
+
+
 class Server:
     """Server class to paginate a dataset"""
     def __init__(self):
