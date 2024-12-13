@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""function that implements a get_hyper method"""
+"""Hypermedia pagination"""
 import csv
 import math
 from typing import List, Dict
@@ -57,6 +57,6 @@ class Server:
 
 def index_range(page, page_size):
     """Calculate the start and end indices for a dataset page"""
-    baslangic = (page - 1) * page_size
-    bitis = page * page_size
-    return tuple([baslangic, bitis])
+    start = (page - 1) * page_size
+    end = page * page_size
+    return tuple([start, end])
