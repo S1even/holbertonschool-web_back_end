@@ -1,62 +1,38 @@
 const http = require('http');
-const fs = require('fs').promises;
-const path = require('path');
+const url = require('url');
 
-function countStudents(filePath) {
-  return fs.readFile(filePath, 'utf-8')
-    .then((data) => {
-      const lines = data.split('\n').filter(line => line.trim().length > 0);
+const countStudents = require('./3-read_file_async');
 
-      if (lines.length <= 1) {
-        throw new Error('Cannot load the database');
-      }
+const path = process.argv[2];
 
-      const students = lines.slice(1);
-      let output = `Number of students: ${students.length}\n`;
+const app = http.createServer((req, res) => {
+  const parsedUrl = url.parse(req.url, true);
 
-      const fields = {};
-
-      students.forEach(student => {
-        const [firstname, , , field] = student.split(',');
-
-        if (!fields[field]) {
-          fields[field] = [];
-        }
-        fields[field].push(firstname);
-      });
-
-      for (const [field, names] of Object.entries(fields)) {
-        output += `Number of students in ${field}: ${names.length}. List: ${names.join(', ')}\n`;
-      }
-
-      return output.trim();
-    })
-    .catch(() => {
-      throw new Error('Cannot load the database');
-    });
-}
-
-const app = http.createServer(async (req, res) => {
-  if (req.url === '/') {
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
+  if (parsedUrl.pathname === '/') {
+    res.setHeader('Content-Type', 'text/plain');
+    res.statusCode = 200;
     res.end('Hello Holberton School!');
-  } else if (req.url === '/students') {
-    const databasePath = process.argv[2];
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
+  } else if (parsedUrl.pathname === '/students') {
+    res.setHeader('Content-Type', 'text/plain');
+    res.statusCode = 200;
+
     res.write('This is the list of our students\n');
-    
-    try {
-      const studentData = await countStudents(databasePath);
-      res.end(studentData);
-    } catch (error) {
-      res.end(error.message);
-    }
+
+    countStudents(path)
+      .then((output) => {
+        res.end(output);
+      })
+      .catch((err) => {
+        res.end(err.message);
+      });
   } else {
-    res.writeHead(404, { 'Content-Type': 'text/plain' });
+    res.statusCode = 404;
     res.end('Not Found');
   }
 });
 
-app.listen(1245);
+app.listen(1245, () => {
+  console.log('Server is listening on port 1245');
+});
 
 module.exports = app;
