@@ -1,6 +1,5 @@
 node_modules
 .eslintrc.js
 babel.config.js
-database.csv
 package-lock.json
 package.json
