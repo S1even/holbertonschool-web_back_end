@@ -1,38 +1,46 @@
 const http = require('http');
-const url = require('url');
+const { readFile } = require('fs').promises;
 
-const countStudents = require('./3-read_file_async');
+const countStudents = async (path) => {
+  try {
+    const data = await readFile(path, 'utf8');
+    const lines = data.trim().split('\n');
+    const students = lines.slice(1).filter((line) => line.length > 0);
+    const fields = {};
+    let output = '';
 
-const path = process.argv[2];
+    students.forEach((student) => {
+      const [firstName, , , field] = student.split(',');
+      if (!fields[field]) fields[field] = { count: 0, names: [] };
+      fields[field].count += 1;
+      fields[field].names.push(firstName);
+    });
 
-const app = http.createServer((req, res) => {
-  const parsedUrl = url.parse(req.url, true);
+    output += `Number of students: ${students.length}\n`;
+    for (const [field, data] of Object.entries(fields)) {
+      output += `Number of students in ${field}: ${data.count}. List: ${data.names.join(', ')}\n`;
+    }
+    return output;
+  } catch (error) {
+    throw new Error('Cannot load the database');
+  }
+};
 
-  if (parsedUrl.pathname === '/') {
-    res.setHeader('Content-Type', 'text/plain');
-    res.statusCode = 200;
+const app = http.createServer(async (req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+
+  if (req.url === '/') {
     res.end('Hello Holberton School!');
-  } else if (parsedUrl.pathname === '/students') {
-    res.setHeader('Content-Type', 'text/plain');
-    res.statusCode = 200;
-
-    res.write('This is the list of our students\n');
-
-    countStudents(path)
-      .then((output) => {
-        res.end(output);
-      })
-      .catch((err) => {
-        res.end(err.message);
-      });
-  } else {
-    res.statusCode = 404;
-    res.end('Not Found');
+  } else if (req.url === '/students') {
+    try {
+      const data = await countStudents(process.argv[2]);
+      res.end(`This is the list of our students\n${data}`);
+    } catch (error) {
+      res.end(error.message);
+    }
   }
 });
 
-app.listen(1245, () => {
-  console.log('Server is listening on port 1245');
-});
+app.listen(1245);
 
 module.exports = app;
