@@ -1,9 +1,41 @@
 const http = require('http');
-const countStudents = require('./3-read_file_async');
+const fs = require('fs');
+const { promisify } = require('util');
 
-const port = 1245;
+const readFile = promisify(fs.readFile);
 
-const app = http.createServer((req, res) => {
+const DATABASE_PATH = './database.csv';
+
+async function countStudents(path) {
+  try {
+    const data = await readFile(path, 'utf8');
+    const lines = data.split('\n').filter((line) => line.trim() !== '');
+    const students = lines.slice(1);
+    const total = students.length;
+
+    const fields = {};
+    students.forEach((student) => {
+      const [firstname, , , field] = student.split(',');
+      if (field) {
+        if (!fields[field]) {
+          fields[field] = [];
+        }
+        fields[field].push(firstname);
+      }
+    });
+
+    let output = `Number of students: ${total}`;
+    for (const [field, names] of Object.entries(fields)) {
+      output += `\nNumber of students in ${field}: ${names.length}. List: ${names.join(', ')}`;
+    }
+
+    return output;
+  } catch (error) {
+    throw new Error('Cannot load the database');
+  }
+}
+
+const app = http.createServer(async (req, res) => {
   if (req.url === '/') {
     res.statusCode = 200;
     res.setHeader('Content-Type', 'text/plain');
@@ -11,24 +43,22 @@ const app = http.createServer((req, res) => {
   } else if (req.url === '/students') {
     res.statusCode = 200;
     res.setHeader('Content-Type', 'text/plain');
-
-    countStudents(process.argv[2])
-      .then((response) => {
-        res.end(`This is the list of our students\n${response}`);
-      })
-      .catch((error) => {
-        res.statusCode = 500;
-        res.end(error.message);
-      });
+    res.write('This is the list of our students\n');
+    try {
+      const studentData = await countStudents(DATABASE_PATH);
+      res.end(studentData);
+    } catch (error) {
+      res.statusCode = 500;
+      res.end(error.message);
+    }
   } else {
     res.statusCode = 404;
-    res.setHeader('Content-Type', 'text/plain');
-    res.end('Not found.');
+    res.end('Not Found');
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server listen on port ${port}`);
+app.listen(1245, () => {
+  console.log('Server running at http://localhost:1245/');
 });
 
 module.exports = app;
