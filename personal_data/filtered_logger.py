@@ -88,7 +88,7 @@ def main() -> None:
     db = get_db()
     cursor = db.cursor()
     cursor.execute("SELECT * FROM users;")
-    
+
     # Récupération du nom des colonnes
     headers = [field[0] for field in cursor.description]
     logger = get_logger()
