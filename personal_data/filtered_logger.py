@@ -7,7 +7,6 @@ import logging
 from typing import List
 
 
-# Task 2: Define the PII_FIELDS constant
 PII_FIELDS = ("name", "email", "phone", "ssn", "password")
 
 
@@ -47,6 +46,6 @@ def get_logger() -> logging.Logger:
 
     stream_handler = logging.StreamHandler()
     stream_handler.setFormatter(RedactingFormatter(list(PII_FIELDS)))
-    
+
     logger.addHandler(stream_handler)
     return logger
