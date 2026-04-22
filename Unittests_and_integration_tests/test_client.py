@@ -7,7 +7,10 @@ import unittest
 from unittest.mock import patch, Mock, PropertyMock
 from parameterized import parameterized
 from client import GithubOrgClient
+from parameterized import parameterized, parameterized_class
 from typing import Dict, Any
+from client import GithubOrgClient
+from fixtures import TEST_PAYLOAD
 
 
 class TestGithubOrgClient(unittest.TestCase):
@@ -97,3 +100,39 @@ class TestGithubOrgClient(unittest.TestCase):
         result = client.has_license(repo, license_key)
 
         self.assertEqual(result, expected)
+
+
+@parameterized_class(
+    ("org_payload", "repos_payload", "expected_repos", "apache2_repos"),
+    TEST_PAYLOAD
+)
+class TestIntegrationGithubOrgClient(unittest.TestCase):
+    """
+    Defines integration tests for the GithubOrgClient class.
+    """
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        """
+        Sets up class-level mocks for external requests before any
+        tests in this class are run.
+        """
+        def get_payload(url: str) -> Mock:
+            """Simulates requests.get().json() based on the URL."""
+            mock_response = Mock()
+            if url.endswith("repos"):
+                mock_response.json.return_value = cls.repos_payload
+            else:
+                mock_response.json.return_value = cls.org_payload
+            return mock_response
+
+        cls.get_patcher = patch('requests.get', side_effect=get_payload)
+
+        cls.mock_get = cls.get_patcher.start()
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        """
+        Stops the class-level patcher after all tests have run.
+        """
+        cls.get_patcher.stop()
