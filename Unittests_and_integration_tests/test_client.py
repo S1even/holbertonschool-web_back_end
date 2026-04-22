@@ -7,6 +7,7 @@ import unittest
 from unittest.mock import patch, Mock, PropertyMock
 from parameterized import parameterized
 from client import GithubOrgClient
+from typing import Dict, Any
 
 
 class TestGithubOrgClient(unittest.TestCase):
@@ -80,3 +81,19 @@ class TestGithubOrgClient(unittest.TestCase):
             mock_public_repos_url.assert_called_once()
 
             mock_get_json.assert_called_once_with(mock_url)
+
+    @parameterized.expand([
+        ({"license": {"key": "my_license"}}, "my_license", True),
+        ({"license": {"key": "other_license"}}, "my_license", False),
+    ])
+    def test_has_license(self, repo: Dict[str, Any], license_key: str,
+                         expected: bool) -> None:
+        """
+        Tests the has_license method to ensure it correctly identifies
+        if a repository has a specific license.
+        """
+        client = GithubOrgClient("google")
+
+        result = client.has_license(repo, license_key)
+
+        self.assertEqual(result, expected)
