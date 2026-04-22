@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
 Flask application integrating Babel for internationalization (i18n).
-Sets up basic configuration for languages, timezone, and locale.
+Adds a locale selector to determine the best matching language.
 """
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 from flask_babel import Babel
 
 
@@ -18,20 +18,29 @@ class Config:
 
 
 app = Flask(__name__)
-
 app.config.from_object(Config)
 
+babel = Babel()
 
-babel = Babel(app)
+
+def get_locale() -> str:
+    """
+    Determines the best match with our supported languages based on
+    the Accept-Language header from the client's request.
+    """
+    return request.accept_languages.best_match(app.config['LANGUAGES'])
+
+
+babel.init_app(app, locale_selector=get_locale)
 
 
 @app.route('/', strict_slashes=False)
 def index() -> str:
     """
-    Renders the 1-index.html template.
+    Renders the 2-index.html template.
     Returns the HTML string to display the welcome message.
     """
-    return render_template('1-index.html')
+    return render_template('2-index.html')
 
 
 if __name__ == '__main__':
